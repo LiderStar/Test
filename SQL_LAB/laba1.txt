@@ -1,0 +1,1 @@
+SELECT name, amount, time FROM book;
