@@ -1,0 +1,49 @@
+#########Create Table##########
+CREATE TABLE fine
+(fine_id INT AUTO_INCREMENT,
+name VARCHAR(30),
+number_plate VARCHAR(6),
+violation VARCHAR(50),
+sum_fine FLOAT(8,2),
+date_violation DATE,
+date_payment DATE,
+PRIMARY KEY (fine_id));
+
+SELECT * FROM fine
+
+
+################################
+INSERT INTO fine 
+(name, number_plate, violation, sum_fine, date_violation, date_payment)
+VALUES
+("Баранов П.Е.", "Р523ВТ", "Превышение скорости(от 40 до 60)", Null,"2020-02-14",Null),	 
+("Абрамова К.А.", "О111АВ", "Проезд на запрещающий сигнал",Null,"2020-02-23",Null),	 
+("Яковлев Г.Р.","Т330ТТ", "Проезд на запрещающий сигнал",Null,"2020-03-03",Null);
+################################
+
+UPDATE fine AS f, traffic_violation AS tv
+SET f.sum_fine = tv.sum_fine
+WHERE f.sum_fine iS NULL AND f.violation = tv.violation;
+
+SELECT * FROM fine;
+
+update fine as f 
+set f.sum_fine = 
+                (Select tv.sum_fine 
+                 from traffic_violation as tv
+                 where f.violation = tv.violation)
+where f.sum_fine is null;
+
+UPDATE fine AS f, traffic_violation AS tv
+SET f.sum_fine = IF(f.sum_fine IS Null, tv.sum_fine, f.sum_fine)
+WHERE tv.violation = f.violation;
+SELECT * FROM fine;
+
+#####################################
+SELECT name, number_plate, violation FROM fine
+GROUP BY name, number_plate, violation
+HAVING count(number_plate)>1
+ORDER BY name, number_plate, violation;
+
+#####################################
+
