@@ -1,3 +1,10 @@
+FROM
+WHERE
+GROUP BY
+HAVING
+SELECT
+ORDER BY
+
 #########Create Table##########
 CREATE TABLE fine
 (fine_id INT AUTO_INCREMENT,
@@ -47,3 +54,66 @@ ORDER BY name, number_plate, violation;
 
 #####################################
 
+UPDATE fine, (SELECT name, number_plate, violation FROM fine
+GROUP BY name, number_plate, violation
+HAVING count(number_plate)>1) query_in
+SET sum_fine = sum_fine * 2
+WHERE query_in.violation = fine.violation AND query_in.name = fine.name AND query_in.number_plate = fine.number_plate AND fine.date_payment IS NULL;
+
+SELECT * FROM fine;
+
+
+UPDATE fine t, fine f SET t.sum_fine  = 2. * t.sum_fine
+WHERE f.name=t.name
+   AND f.date_violation < t.date_violation
+   AND t.violation = f.violation
+   AND t.number_plate = f.number_plate
+   AND t.date_payment IS Null;
+#####################################
+UPDATE fine AS f, payment AS pay
+SET f.date_payment = pay.date_payment,
+f.sum_fine = IF(DATEDIFF(pay.date_payment,pay.date_violation) <= 20, f.sum_fine / 2, f.sum_fine)
+WHERE f.violation = pay.violation AND f.number_plate = pay.number_plate AND f.date_payment IS NULL;
+
+SELECT * FROM fine
+######################################
+
+CREATE TABLE back_payment
+SELECT name, number_plate, violation, sum_fine, date_violation
+FROM fine
+WHERE date_payment IS NULL;
+
+SELECT * FROM back_payment;
+
+#######################################
+DELETE FROM fine WHERE date_violation < "2020-02-01";
+#######################################
+CREATE TABLE book (
+    book_id INT PRIMARY KEY AUTO_INCREMENT,
+    title VARCHAR(50),
+    author_id INT NOT NULL,
+    genre_id INT,
+    price DECIMAL(8,2),
+    amount INT,
+    FOREIGN KEY (author_id)  REFERENCES author (author_id) ON DELETE CASCADE,
+    FOREIGN KEY (genre_id)  REFERENCES genre (genre_id) ON DELETE SET NULL
+);
+###########################################
+SELECT title, name_genre, price
+FROM genre INNER JOIN book
+ON genre.genre_id = book.genre_id
+WHERE amount > 8
+ORDER BY price DESC;
+###########################################
+Генератор даты от 2020,01,01 365 дней
+SELECT name_city, name_author, (DATE_ADD('2020-01-01', INTERVAL FLOOR(RAND() * 365) DAY)) as Дата
+FROM city, author
+
+###########################################
+SELECT name_genre, title, name_author
+FROM
+    author
+    INNER JOIN  book ON author.author_id = book.author_id
+    INNER JOIN genre ON genre.genre_id = book.genre_id
+WHERE name_genre = "роман"
+ORDER BY title;
