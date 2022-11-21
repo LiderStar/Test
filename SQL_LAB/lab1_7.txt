@@ -117,3 +117,6 @@ FROM
     INNER JOIN genre ON genre.genre_id = book.genre_id
 WHERE name_genre = "роман"
 ORDER BY title;
+
+#############################################
+
