@@ -117,3 +117,94 @@ FROM
     INNER JOIN genre ON genre.genre_id = book.genre_id
 WHERE name_genre = "роман"
 ORDER BY title;
+
+###########################################
+SELECT name_author, sum(amount) AS Количество
+FROM author LEFT JOIN book
+on author.author_id=book.author_id
+GROUP BY name_author
+HAVING Количество < 10 OR Количество IS NULL
+ORDER BY Количество;
+
+############################################
+
+SELECT name_author
+FROM author LEFT JOIN book
+on author.author_id=book.author_id
+GROUP BY name_author
+HAVING count(DISTINCT(genre_id)) = 1;
+
+###########################################
+Вывел количество книг сгруппированное по жанрам :
+
+Query result:
++----------+------------+
+| genre_id | sum_amount |
++----------+------------+
+| 1        | 31         |
+| 2        | 31         |
+| 3        | 7          |
++----------+------------+
+Affected rows: 3
+select genre_id, sum(amount) as sum_amount
+        from book
+        group by genre_id
+        having sum_amount
+
+Понял, что у нас несколько жанров имеют одинаковое количество книг, поэтому нужно оставить только те жанры, где кол-во книг будет максимальным. 
+
+Изменяю немного код этот для вложенного запроса, чтобы выдало только максимально количество книг:
+
+        select sum(amount) as sum_amount
+        from book
+        group by genre_id
+        having sum_amount
+        limit 1
+
+Query result:
++------------+
+| sum_amount |
++------------+
+| 31         |
++------------+
+Affected rows: 1
+и пишу внешний запрос для выбора только номеров жанра(genre_id) фильтруя его по максимальному количеству(запросу сверху):
+
+select genre_id
+    from book
+    group by genre_id
+    having  sum(amount) = (
+        select sum(amount) as sum_amount
+        from book
+        group by genre_id
+        having sum_amount
+        limit 1)
+
+Query result:
++----------+
+| genre_id |
++----------+
+| 1        |
+| 2        |
++----------+
+На выходе получаю один столбец с номерами жанров. Самое сложное мы сделали, эти два запроса у нас будут внутренними для условия отбора. Осталось соединить все три таблицы и добавить эти запросы в условие where
+
+SELECT title, name_author, name_genre, price, amount
+FROM 
+    author 
+    INNER JOIN book ON author.author_id = book.author_id
+    INNER JOIN genre ON  book.genre_id = genre.genre_id
+WHERE genre.genre_id in 
+        (select genre_id
+        from book
+        group by genre_id
+        having  sum(amount) = (
+            select sum(amount) as sum_amount
+            from book
+            group by genre_id
+            having sum_amount
+            limit 1))
+ORDER BY title
+
+#################################################
+
