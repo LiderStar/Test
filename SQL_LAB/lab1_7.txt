@@ -432,6 +432,184 @@ WHERE city_id = 1;
 
 SELECT * FROM client
 ######################################################
+INSERT INTO buy_book (buy_id, book_id, amount)
+SELECT 5, book_id, 2
+FROM book
+WHERE title = 'Лирика';
+INSERT INTO buy_book (buy_id, book_id, amount)
+SELECT 5, book_id, 1
+FROM book
+WHERE title = 'Белая гвардия';
+
+SELECT * FROM buy_book;
+
+
+insert into buy_book (buy_id, book_id, amount)
+select 5, book_id, 2
+from book
+where title = 'Лирика'
+    and author_id = (select author_id from author where name_author = 'Пастернак Б.Л.')
+union
+select 5, book_id, 1
+from book
+where title = 'Белая гвардия'
+    and author_id = (select author_id from author where name_author = 'Булгаков М.А.');
+
+select * from buy_book;
+######################################################
+UPDATE book AS b
+SET amount = amount - (SELECT amount FROM buy_book WHERE buy_id = 5 AND book_id = 8)
+WHERE book_id = 8;
+UPDATE book AS b
+SET amount = amount - (SELECT amount FROM buy_book WHERE buy_id = 5 AND book_id = 2)
+WHERE book_id = 2;
+
+SELECT * FROM book;
+
+
+UPDATE book, buy_book
+SET book.amount = book.amount - buy_book.amount
+WHERE book.book_id = buy_book.book_id
+AND buy_book.buy_id = 5;
+
+SELECT * FROM book;
+
+
+UPDATE book b INNER JOIN buy_book bb ON b.book_id=bb.book_id AND buy_id=5
+SET b.amount=b.amount-bb.amount;
+
+SELECT * FROM book;
+
+######################################################
+CREATE TABLE buy_pay
+SELECT title, name_author, book.price, buy_book.amount, (book.price*buy_book.amount) AS Стоимость
+FROM book
+INNER JOIN author USING(author_id)
+INNER JOIN buy_book USING(book_id)
+WHERE book.book_id = buy_book.book_id
+AND buy_book.buy_id = 5
+ORDER BY title;
+
+SELECT * FROM buy_pay;
+######################################################
+CREATE TABLE buy_pay
+SELECT buy_id, SUM(buy_book.amount) AS Количество, SUM(book.price*buy_book.amount) AS Итого
+FROM book
+INNER JOIN buy_book USING(book_id)
+WHERE book.book_id = buy_book.book_id
+AND buy_book.buy_id = 5
+GROUP BY buy_id;
+
+SELECT * FROM buy_pay;
+
+######################################################
+INSERT INTO buy_step (buy_id, step_id, date_step_beg, date_step_end)
+SELECT buy.buy_id, step_id, Null, Null
+FROM buy, step
+WHERE buy.buy_id = 5;
+
+SELECT * FROM buy_step
+
+INSERT INTO buy_step (buy_id, step_id)
+SELECT 5, step_id FROM step;
+
+SELECT * FROM buy_step;
+
+
+INSERT INTO buy_step (buy_id, step_id, date_step_beg, date_step_end)
+SELECT 5, step_id, NULL, NULL
+FROM step;
+
+SELECT * FROM buy_step;
+######################################################
+UPDATE buy_step
+SET date_step_beg = "2020.04.12"
+WHERE buy_id = 5 AND step_id = 1;
+
+SELECT * FROM buy_step;
+######################################################
+UPDATE buy_step
+SET date_step_end = "2020.04.13"
+WHERE buy_id = 5 AND step_id = (SELECT step_id FROM step WHERE name_step LIKE "Оплата");
+UPDATE buy_step
+SET date_step_beg = "2020.04.13"
+WHERE buy_id = 5 AND step_id = (SELECT step_id FROM step WHERE name_step LIKE "Упаковка");
+SELECT * FROM buy_step;
+
+
+
+UPDATE buy_step
+      INNER JOIN step
+      ON buy_step.step_id = step.step_id
+SET date_step_end = '2020-04-13'
+WHERE name_step ='Оплата' AND buy_id = 5;
+
+UPDATE buy_step
+      INNER JOIN step
+      ON buy_step.step_id = step.step_id
+SET date_step_beg = '2020-04-13'
+WHERE buy_step.step_id = (SELECT step_id + 1 FROM step WHERE name_step='Оплата') AND buy_id = 5;
+
+Select * from buy_step
+WHERE buy_id = 5;
+######################################################
+SELECT name_student, date_attempt, result
+FROM attempt
+INNER JOIN student USING (student_id)
+INNER JOIN subject USING (subject_id)
+WHERE name_subject = "Основы баз данных"
+ORDER BY result DESC
+
+
+Without WHERE
+SELECT name_student, date_attempt, result
+FROM subject s JOIN attempt a ON s.subject_id = a.subject_id AND s.name_subject = 'Основы баз данных'
+               JOIN student st ON a.student_id = st.student_id
+ORDER BY result DESC
+
+######################################################
+SELECT name_subject, IF (COUNT(attempt.subject_id) IS NOT NULL, COUNT(attempt.subject_id),0)  AS Количество,
+ROUND((SUM(result)/COUNT(subject_id)),2) AS Среднее
+FROM attempt
+RIGHT JOIN subject USING (subject_id)
+GROUP BY subject_id;
+
+
+SELECT name_subject, COUNT(date_attempt) AS Количество, ROUND(AVG(result),2) AS Среднее
+FROM attempt
+             right JOIN subject
+             ON attempt.subject_id = subject.subject_id
+GROUP BY name_subject
+ORDER BY Среднее DESC;
+
+######################################################
+SELECT name_student, result
+FROM attempt
+INNER JOIN student ON attempt.student_id = student.student_id
+WHERE result = (SELECT MAX(result) FROM attempt)
+ORDER BY name_student;
+######################################################
+SELECT name_student, name_subject,
+DATEDIFF(MAX(date_attempt), MIN(date_attempt)) AS Интервал
+FROM attempt
+INNER JOIN student USING (student_id)
+INNER JOIN subject USING (subject_id)
+GROUP BY 1,2
+HAVING COUNT(date_attempt)>1
+ORDER BY 3
+######################################################
+SELECT DISTINCT name_subject, COUNT(DISTINCT attempt.student_id) AS Количество
+FROM attempt
+RIGHT JOIN subject USING (subject_id)
+GROUP BY name_subject
+ORDER BY Количество DESC, 1;
+######################################################
+SELECT question_id, name_question
+FROM question
+INNER JOIN subject ON question.subject_id = subject.subject_id AND name_subject= "Основы баз данных"
+ORDER BY RAND()
+LIMIT 3
+######################################################
 ######################################################
 ######################################################
 ######################################################
